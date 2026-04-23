@@ -1,8 +1,16 @@
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-set(LLVM_MINGW_ROOT "/home/trevor/.local/toolchains/llvm-mingw-20260421-ucrt-ubuntu-22.04-x86_64" CACHE PATH "llvm-mingw root")
-set(LLVM_MINGW_TARGET x86_64-w64-mingw32)
+if(NOT DEFINED LLVM_MINGW_ROOT)
+    if(DEFINED ENV{LLVM_MINGW_ROOT})
+        set(LLVM_MINGW_ROOT "$ENV{LLVM_MINGW_ROOT}")
+    else()
+        set(LLVM_MINGW_ROOT "/home/trevor/.local/toolchains/llvm-mingw-20260421-ucrt-ubuntu-22.04-x86_64")
+    endif()
+endif()
+
+set(LLVM_MINGW_ROOT "${LLVM_MINGW_ROOT}" CACHE PATH "llvm-mingw root")
+set(LLVM_MINGW_TARGET x86_64-w64-mingw32 CACHE STRING "llvm-mingw target triple")
 
 set(CMAKE_C_COMPILER "${LLVM_MINGW_ROOT}/bin/${LLVM_MINGW_TARGET}-clang" CACHE FILEPATH "")
 set(CMAKE_CXX_COMPILER "${LLVM_MINGW_ROOT}/bin/${LLVM_MINGW_TARGET}-clang++" CACHE FILEPATH "")

@@ -148,37 +148,37 @@ private:
 
 } // namespace
 
-extern "C" __declspec (dllexport) int32_t yuckbeat_engine_api_version ()
+YUCKBEAT_ENGINE_EXPORT int32_t yuckbeat_engine_api_version ()
 {
 	return YUCKBEAT_ENGINE_API_VERSION;
 }
 
-extern "C" __declspec (dllexport) YuckBeatEngineHandle yuckbeat_engine_create ()
+YUCKBEAT_ENGINE_EXPORT YuckBeatEngineHandle yuckbeat_engine_create ()
 {
 	return new Engine ();
 }
 
-extern "C" __declspec (dllexport) void yuckbeat_engine_destroy (YuckBeatEngineHandle handle)
+YUCKBEAT_ENGINE_EXPORT void yuckbeat_engine_destroy (YuckBeatEngineHandle handle)
 {
 	delete static_cast<Engine*> (handle);
 }
 
-extern "C" __declspec (dllexport) void yuckbeat_engine_reset (YuckBeatEngineHandle handle,
-                                                               double sampleRate, int32_t channels)
+YUCKBEAT_ENGINE_EXPORT void yuckbeat_engine_reset (YuckBeatEngineHandle handle, double sampleRate,
+                                                   int32_t channels)
 {
 	if (auto* engine = static_cast<Engine*> (handle))
 		engine->reset (sampleRate, channels);
 }
 
-extern "C" __declspec (dllexport) void yuckbeat_engine_process (YuckBeatEngineHandle handle,
-                                                                 const YuckBeatEngineParams* params,
-                                                                 const YuckBeatEngineProcessBlock* block)
+YUCKBEAT_ENGINE_EXPORT void yuckbeat_engine_process (YuckBeatEngineHandle handle,
+                                                     const YuckBeatEngineParams* params,
+                                                     const YuckBeatEngineProcessBlock* block)
 {
 	if (auto* engine = static_cast<Engine*> (handle); engine && params && block)
 		engine->process (*params, *block);
 }
 
-extern "C" __declspec (dllexport) const char* yuckbeat_engine_version ()
+YUCKBEAT_ENGINE_EXPORT const char* yuckbeat_engine_version ()
 {
 	return "YuckBeatEngine dev";
 }

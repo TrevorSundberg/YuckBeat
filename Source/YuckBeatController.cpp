@@ -1,6 +1,9 @@
 #include "YuckBeatController.h"
-#include "YuckBeatEditor.h"
 #include "YuckBeatIDs.h"
+
+#if YUCKBEAT_HAS_NATIVE_EDITOR
+#include "YuckBeatEditor.h"
+#endif
 
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ibstream.h"
@@ -51,8 +54,10 @@ tresult PLUGIN_API Controller::initialize (FUnknown* context)
 
 IPlugView* PLUGIN_API Controller::createView (FIDString name)
 {
+#if YUCKBEAT_HAS_NATIVE_EDITOR
 	if (name && std::strcmp (name, ViewType::kEditor) == 0)
 		return new Editor (this);
+#endif
 
 	return nullptr;
 }

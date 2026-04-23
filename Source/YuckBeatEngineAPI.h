@@ -4,6 +4,12 @@
 
 #define YUCKBEAT_ENGINE_API_VERSION 1
 
+#if defined(_WIN32)
+#define YUCKBEAT_ENGINE_EXPORT extern "C" __declspec (dllexport)
+#else
+#define YUCKBEAT_ENGINE_EXPORT extern "C" __attribute__ ((visibility ("default")))
+#endif
+
 struct YuckBeatEngineParams
 {
 	double mix {};
