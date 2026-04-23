@@ -105,6 +105,16 @@ void Processor::applyParameterChanges (IParameterChanges& changes)
 				case kRoomSizeId: roomSize = value; break;
 				case kDampingId: damping = value; break;
 				case kPreDelayId: preDelay = value; break;
+				case kFractalShapeId: fractalShape = value; break;
+				case kFractalFoldId: fractalFold = value; break;
+				case kFractalPowerId: fractalPower = value; break;
+				case kFractalScaleId: fractalScale = value; break;
+				case kFractalSpinId: fractalSpin = value; break;
+				case kFractalSizeId: fractalSize = value; break;
+				case kFractalHueId: fractalHue = value; break;
+				case kFractalLightId: fractalLight = value; break;
+				case kFractalRaysId: fractalRays = value; break;
+				case kFractalBloomId: fractalBloom = value; break;
 				case kBypassId: bypass = value > 0.5; break;
 			}
 		}
@@ -194,7 +204,7 @@ tresult PLUGIN_API Processor::setState (IBStream* state)
 	int32 version = 0;
 	if (!streamer.readInt32 (magic) || magic != StateMagic)
 		return kResultOk;
-	if (!streamer.readInt32 (version) || version != StateVersion)
+	if (!streamer.readInt32 (version) || version < 1 || version > StateVersion)
 		return kResultOk;
 
 	bool savedBypass = false;
@@ -206,6 +216,13 @@ tresult PLUGIN_API Processor::setState (IBStream* state)
 	    !streamer.readDouble (reverbMix) || !streamer.readDouble (roomSize) ||
 	    !streamer.readDouble (damping) || !streamer.readDouble (preDelay) ||
 	    !streamer.readBool (savedBypass))
+		return kResultFalse;
+	if (version >= 2 &&
+	    (!streamer.readDouble (fractalShape) || !streamer.readDouble (fractalFold) ||
+	     !streamer.readDouble (fractalPower) || !streamer.readDouble (fractalScale) ||
+	     !streamer.readDouble (fractalSpin) || !streamer.readDouble (fractalSize) ||
+	     !streamer.readDouble (fractalHue) || !streamer.readDouble (fractalLight) ||
+	     !streamer.readDouble (fractalRays) || !streamer.readDouble (fractalBloom)))
 		return kResultFalse;
 
 	volume = clamp01 (volume);
@@ -220,6 +237,16 @@ tresult PLUGIN_API Processor::setState (IBStream* state)
 	roomSize = clamp01 (roomSize);
 	damping = clamp01 (damping);
 	preDelay = clamp01 (preDelay);
+	fractalShape = clamp01 (fractalShape);
+	fractalFold = clamp01 (fractalFold);
+	fractalPower = clamp01 (fractalPower);
+	fractalScale = clamp01 (fractalScale);
+	fractalSpin = clamp01 (fractalSpin);
+	fractalSize = clamp01 (fractalSize);
+	fractalHue = clamp01 (fractalHue);
+	fractalLight = clamp01 (fractalLight);
+	fractalRays = clamp01 (fractalRays);
+	fractalBloom = clamp01 (fractalBloom);
 	bypass = savedBypass;
 	return kResultOk;
 }
@@ -245,6 +272,16 @@ tresult PLUGIN_API Processor::getState (IBStream* state)
 	streamer.writeDouble (damping);
 	streamer.writeDouble (preDelay);
 	streamer.writeBool (bypass);
+	streamer.writeDouble (fractalShape);
+	streamer.writeDouble (fractalFold);
+	streamer.writeDouble (fractalPower);
+	streamer.writeDouble (fractalScale);
+	streamer.writeDouble (fractalSpin);
+	streamer.writeDouble (fractalSize);
+	streamer.writeDouble (fractalHue);
+	streamer.writeDouble (fractalLight);
+	streamer.writeDouble (fractalRays);
+	streamer.writeDouble (fractalBloom);
 
 	return kResultOk;
 }

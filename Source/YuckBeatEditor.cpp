@@ -19,8 +19,8 @@ namespace YuckBeat {
 
 namespace {
 
-constexpr int32 kEditorWidth = 760;
-constexpr int32 kEditorHeight = 500;
+constexpr int32 kEditorWidth = 960;
+constexpr int32 kEditorHeight = 640;
 constexpr UINT_PTR kRefreshTimer = 1001;
 
 ViewRect kEditorRect (0, 0, kEditorWidth, kEditorHeight);
@@ -40,6 +40,7 @@ constexpr COLORREF kGrid = rgb (50, 63, 58);
 constexpr COLORREF kAcid = rgb (165, 255, 69);
 constexpr COLORREF kHeat = rgb (255, 130, 45);
 constexpr COLORREF kBlue = rgb (94, 202, 224);
+constexpr COLORREF kGold = rgb (255, 207, 77);
 
 struct GdiObject
 {
@@ -173,7 +174,8 @@ void drawKnob (HDC dc, const Editor::Binding& binding, ParamValue value)
 	const auto pitchAccent = binding.id == kPitchId || binding.id == kPitchMixId;
 	const auto echoAccent = binding.id == kEchoMixId || binding.id == kEchoTimeId ||
 	                        binding.id == kEchoFeedbackId || binding.id == kPreDelayId;
-	const auto accent = pitchAccent ? kHeat : (echoAccent ? kBlue : kAcid);
+	const auto visualAccent = binding.id >= kFractalShapeId && binding.id <= kFractalBloomId;
+	const auto accent = visualAccent ? kGold : (pitchAccent ? kHeat : (echoAccent ? kBlue : kAcid));
 
 	GdiObject fill (CreateSolidBrush (kPanel));
 	GdiObject outline (CreatePen (PS_SOLID, 1, rgb (65, 76, 70)));
@@ -245,28 +247,52 @@ Editor::~Editor ()
 
 void Editor::initializeBindings ()
 {
-	constexpr int knobSize = 68;
-	constexpr int x0 = 42;
-	constexpr int x1 = 226;
-	constexpr int x2 = 410;
-	constexpr int x3 = 594;
-	constexpr int row1 = 130;
-	constexpr int row2 = 260;
-	constexpr int row3 = 390;
+	constexpr int audioKnob = 58;
+	constexpr int visualKnob = 44;
+	constexpr int x0 = 350;
+	constexpr int x1 = 495;
+	constexpr int x2 = 640;
+	constexpr int x3 = 785;
+	constexpr int row1 = 125;
+	constexpr int row2 = 265;
+	constexpr int row3 = 405;
+	constexpr int visualRow = 536;
+	constexpr int vx0 = 44;
+	constexpr int visualStep = 88;
 	bindings = {
-		Binding {kVolumeId, x0, row1, knobSize, knobSize, DefaultVolume, "VOLUME", "output level", false},
-		Binding {kHighPassId, x1, row1, knobSize, knobSize, DefaultHighPass, "HIGH PASS", "remove lows", false},
-		Binding {kLowPassId, x2, row1, knobSize, knobSize, DefaultLowPass, "LOW PASS", "remove highs", false},
-		Binding {kPitchId, x3, row1, knobSize, knobSize, DefaultPitch, "PITCH", "semitones", false},
-		Binding {kPitchMixId, x0, row2, knobSize, knobSize, DefaultPitchMix, "PITCH MIX", "shift blend", false},
-		Binding {kEchoMixId, x1, row2, knobSize, knobSize, DefaultEchoMix, "ECHO MIX", "delay level", false},
-		Binding {kEchoTimeId, x2, row2, knobSize, knobSize, DefaultEchoTime, "ECHO TIME", "BPM note", false},
-		Binding {kEchoFeedbackId, x3, row2, knobSize, knobSize, DefaultEchoFeedback, "ECHO FB", "repeats", false},
-		Binding {kReverbMixId, x0, row3, knobSize, knobSize, DefaultReverbMix, "VERB MIX", "room level", false},
-		Binding {kRoomSizeId, x1, row3, knobSize, knobSize, DefaultRoomSize, "ROOM", "space size", false},
-		Binding {kDampingId, x2, row3, knobSize, knobSize, DefaultDamping, "DAMPING", "darkness", false},
-		Binding {kPreDelayId, x3, row3, knobSize, knobSize, DefaultPreDelay, "PRE-DELAY", "BPM note", false},
-		Binding {kBypassId, 646, 24, 88, 26, 0.0, "BYPASS", "", true},
+		Binding {kVolumeId, x0, row1, audioKnob, audioKnob, DefaultVolume, "VOLUME", "output level", false},
+		Binding {kHighPassId, x1, row1, audioKnob, audioKnob, DefaultHighPass, "HIGH PASS", "remove lows", false},
+		Binding {kLowPassId, x2, row1, audioKnob, audioKnob, DefaultLowPass, "LOW PASS", "remove highs", false},
+		Binding {kPitchId, x3, row1, audioKnob, audioKnob, DefaultPitch, "PITCH", "semitones", false},
+		Binding {kPitchMixId, x0, row2, audioKnob, audioKnob, DefaultPitchMix, "PITCH MIX", "shift blend", false},
+		Binding {kEchoMixId, x1, row2, audioKnob, audioKnob, DefaultEchoMix, "ECHO MIX", "delay level", false},
+		Binding {kEchoTimeId, x2, row2, audioKnob, audioKnob, DefaultEchoTime, "ECHO TIME", "BPM note", false},
+		Binding {kEchoFeedbackId, x3, row2, audioKnob, audioKnob, DefaultEchoFeedback, "ECHO FB", "repeats", false},
+		Binding {kReverbMixId, x0, row3, audioKnob, audioKnob, DefaultReverbMix, "VERB MIX", "room level", false},
+		Binding {kRoomSizeId, x1, row3, audioKnob, audioKnob, DefaultRoomSize, "ROOM", "space size", false},
+		Binding {kDampingId, x2, row3, audioKnob, audioKnob, DefaultDamping, "DAMPING", "darkness", false},
+		Binding {kPreDelayId, x3, row3, audioKnob, audioKnob, DefaultPreDelay, "PRE-DELAY", "BPM note", false},
+		Binding {kFractalShapeId, vx0 + visualStep * 0, visualRow, visualKnob, visualKnob,
+		         DefaultFractalShape, "SHAPE", "object mix", false},
+		Binding {kFractalFoldId, vx0 + visualStep * 1, visualRow, visualKnob, visualKnob,
+		         DefaultFractalFold, "FOLD", "mirror fold", false},
+		Binding {kFractalPowerId, vx0 + visualStep * 2, visualRow, visualKnob, visualKnob,
+		         DefaultFractalPower, "POWER", "detail push", false},
+		Binding {kFractalScaleId, vx0 + visualStep * 3, visualRow, visualKnob, visualKnob,
+		         DefaultFractalScale, "SCALE", "fractal gain", false},
+		Binding {kFractalSpinId, vx0 + visualStep * 4, visualRow, visualKnob, visualKnob,
+		         DefaultFractalSpin, "SPIN", "motion", false},
+		Binding {kFractalSizeId, vx0 + visualStep * 5, visualRow, visualKnob, visualKnob,
+		         DefaultFractalSize, "SIZE", "zoom mass", false},
+		Binding {kFractalHueId, vx0 + visualStep * 6, visualRow, visualKnob, visualKnob,
+		         DefaultFractalHue, "HUE", "palette", false},
+		Binding {kFractalLightId, vx0 + visualStep * 7, visualRow, visualKnob, visualKnob,
+		         DefaultFractalLight, "LIGHT", "key light", false},
+		Binding {kFractalRaysId, vx0 + visualStep * 8, visualRow, visualKnob, visualKnob,
+		         DefaultFractalRays, "RAYS", "god rays", false},
+		Binding {kFractalBloomId, vx0 + visualStep * 9, visualRow, visualKnob, visualKnob,
+		         DefaultFractalBloom, "BLOOM", "glow", false},
+		Binding {kBypassId, 846, 24, 88, 26, 0.0, "BYPASS", "", true},
 	};
 }
 
@@ -294,6 +320,7 @@ tresult PLUGIN_API Editor::attached (void* parent, FIDString type)
 		return kResultFalse;
 	}
 
+	animationStartMs = GetTickCount64 ();
 	SetTimer (window, kRefreshTimer, 50, nullptr);
 	return kResultTrue;
 }
@@ -406,6 +433,88 @@ int Editor::findBindingAt (int x, int y) const
 	return -1;
 }
 
+FractalRenderParams Editor::makeFractalRenderParams () const
+{
+	const auto elapsedMs =
+	    animationStartMs > 0 ? GetTickCount64 () - animationStartMs : static_cast<ULONGLONG> (0);
+	const auto time = static_cast<float> (static_cast<double> (elapsedMs) * 0.001);
+	const auto volume = static_cast<float> (getParameter (kVolumeId));
+	const auto highPass = static_cast<float> (getParameter (kHighPassId));
+	const auto lowPass = static_cast<float> (getParameter (kLowPassId));
+	const auto pitch = static_cast<float> (getParameter (kPitchId));
+	const auto pitchMix = static_cast<float> (getParameter (kPitchMixId));
+	const auto echoMix = static_cast<float> (getParameter (kEchoMixId));
+	const auto echoTime = static_cast<float> (getParameter (kEchoTimeId));
+	const auto echoFeedback = static_cast<float> (getParameter (kEchoFeedbackId));
+	const auto reverbMix = static_cast<float> (getParameter (kReverbMixId));
+	const auto roomSize = static_cast<float> (getParameter (kRoomSizeId));
+	const auto damping = static_cast<float> (getParameter (kDampingId));
+	const auto preDelay = static_cast<float> (getParameter (kPreDelayId));
+
+	const auto echoBeat = static_cast<float> (syncBeatsFromNormalized (echoTime));
+	const auto preDelayBeat = static_cast<float> (syncBeatsFromNormalized (preDelay));
+	const auto pulseSeconds = std::max (0.125f, (echoBeat + preDelayBeat) * 0.5f);
+	const auto pulse =
+	    0.5f + 0.5f * std::sin (time * 2.0f * 3.14159265358979323846f / pulseSeconds);
+	auto hue = static_cast<float> (getParameter (kFractalHueId)) + pitchMix * 0.08f +
+	           echoMix * 0.05f + pulse * 0.025f;
+	hue -= std::floor (hue);
+
+	FractalRenderParams params {};
+	params.time = time;
+	params.shape = static_cast<float> (clamp01 (getParameter (kFractalShapeId) * 0.70 + highPass * 0.30));
+	params.fold = static_cast<float> (clamp01 (getParameter (kFractalFoldId) * 0.64 +
+	                                           echoFeedback * 0.24 + reverbMix * 0.12));
+	params.power = static_cast<float> (clamp01 (getParameter (kFractalPowerId) * 0.70 +
+	                                            std::fabs (pitch - 0.5f) * 0.60));
+	params.scale = static_cast<float> (clamp01 (getParameter (kFractalScaleId) * 0.62 +
+	                                            roomSize * 0.26 + (1.0f - lowPass) * 0.12));
+	params.spin = static_cast<float> (clamp01 (getParameter (kFractalSpinId) * 0.68 +
+	                                           pitchMix * 0.14 +
+	                                           std::min (1.0f, 1.0f / echoBeat / 8.0f) * 0.18));
+	params.size = static_cast<float> (clamp01 (getParameter (kFractalSizeId) * 0.70 +
+	                                           roomSize * 0.20 + preDelay * 0.10));
+	params.hue = hue;
+	params.light = static_cast<float> (clamp01 (getParameter (kFractalLightId) * 0.70 +
+	                                            volume * 0.20 + pulse * 0.10));
+	params.roughness = damping;
+	params.audioDrive =
+	    static_cast<float> (clamp01 (std::max ({echoMix, reverbMix, pitchMix * 0.55f})));
+	params.ao = static_cast<float> (clamp01 (0.42 + highPass * 0.28 + damping * 0.30));
+	params.bloom = static_cast<float> (clamp01 (getParameter (kFractalBloomId) * 0.68 +
+	                                            echoFeedback * 0.20 + volume * 0.12));
+	params.rays = static_cast<float> (clamp01 (getParameter (kFractalRaysId) * 0.66 +
+	                                           echoMix * 0.18 + reverbMix * 0.16));
+	params.bpmPulse = pulse;
+	params.bypass = getParameter (kBypassId) > 0.5 ? 1.0f : 0.0f;
+	return params;
+}
+
+void Editor::drawFractalPreview (HDC dc, const RECT& rect)
+{
+	renderFractal (makeFractalRenderParams (), fractalPixels.data ());
+
+	BITMAPINFO bitmapInfo {};
+	bitmapInfo.bmiHeader.biSize = sizeof (bitmapInfo.bmiHeader);
+	bitmapInfo.bmiHeader.biWidth = FractalRenderWidth;
+	bitmapInfo.bmiHeader.biHeight = -FractalRenderHeight;
+	bitmapInfo.bmiHeader.biPlanes = 1;
+	bitmapInfo.bmiHeader.biBitCount = 32;
+	bitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+	StretchDIBits (dc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0, 0,
+	               FractalRenderWidth, FractalRenderHeight, fractalPixels.data (), &bitmapInfo,
+	               DIB_RGB_COLORS, SRCCOPY);
+
+	GdiObject border (CreatePen (PS_SOLID, 1, rgb (95, 112, 101)));
+	SelectGuard borderGuard (dc, border);
+	MoveToEx (dc, rect.left, rect.top, nullptr);
+	LineTo (dc, rect.right, rect.top);
+	LineTo (dc, rect.right, rect.bottom);
+	LineTo (dc, rect.left, rect.bottom);
+	LineTo (dc, rect.left, rect.top);
+}
+
 LRESULT CALLBACK Editor::windowProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	auto* editor = reinterpret_cast<Editor*> (
@@ -432,6 +541,7 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 			if (wParam == kRefreshTimer)
 			{
 				syncFromController ();
+				InvalidateRect (window, nullptr, FALSE);
 				return 0;
 			}
 			break;
@@ -456,24 +566,40 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 			GdiObject titleFont (makeFont (29, FW_BOLD));
 			GdiObject smallFont (makeFont (11, FW_SEMIBOLD));
 			GdiObject tinyFont (makeFont (10));
-				drawText (memoryDc, makeRect (24, 18, 220, 34), L"YUCKBEAT", kInk,
-				          static_cast<HFONT> (titleFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-				drawText (memoryDc, makeRect (240, 25, 390, 20),
-				          L"basic BPM-aware multi-effect template", kMuted,
-				          static_cast<HFONT> (smallFont.object), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+			drawText (memoryDc, makeRect (24, 18, 220, 34), L"YUCKBEAT", kInk,
+			          static_cast<HFONT> (titleFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+			drawText (memoryDc, makeRect (250, 25, 500, 20),
+			          L"compact multi-effect with 256x256 SDF raymarch monitor", kMuted,
+			          static_cast<HFONT> (smallFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
-				drawSection (memoryDc, makeRect (22, 86, 716, 118), L"FILTER / GAIN",
-				             L"Set level, clean up lows and highs, then tune pitch in semitones.", kAcid,
-				             static_cast<HFONT> (smallFont.object),
-				             static_cast<HFONT> (tinyFont.object));
-				drawSection (memoryDc, makeRect (22, 216, 716, 118), L"PITCH / ECHO",
-				             L"Pitch mix blends the shifter. Echo time follows the host BPM.", kBlue,
-				             static_cast<HFONT> (smallFont.object),
-				             static_cast<HFONT> (tinyFont.object));
-				drawSection (memoryDc, makeRect (22, 346, 716, 118), L"REVERB",
-				             L"Room, damping and BPM-synced pre-delay shape the space.", kHeat,
-				             static_cast<HFONT> (smallFont.object),
-				             static_cast<HFONT> (tinyFont.object));
+			drawSection (memoryDc, makeRect (22, 82, 280, 408), L"SDF RAYMARCH",
+			             L"Audio controls push color, light, motion and surface detail.", kGold,
+			             static_cast<HFONT> (smallFont.object),
+			             static_cast<HFONT> (tinyFont.object));
+			drawFractalPreview (memoryDc, makeRect (34, 124, FractalRenderWidth, FractalRenderHeight));
+			drawText (memoryDc, makeRect (34, 392, 252, 22), L"PBR-ish light, AO, bloom and rays",
+			          kInk, static_cast<HFONT> (smallFont.object),
+			          DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+			drawText (memoryDc, makeRect (34, 418, 252, 36),
+			          L"Effect knobs and the SDF knobs below all feed the renderer.", kMuted,
+			          static_cast<HFONT> (tinyFont.object), DT_CENTER | DT_WORDBREAK);
+
+			drawSection (memoryDc, makeRect (322, 82, 616, 122), L"FILTER / GAIN",
+			             L"Set level, clean lows and highs, then tune pitch in semitones.", kAcid,
+			             static_cast<HFONT> (smallFont.object),
+			             static_cast<HFONT> (tinyFont.object));
+			drawSection (memoryDc, makeRect (322, 222, 616, 122), L"PITCH / ECHO",
+			             L"Pitch mix blends the shifter. Echo time follows the host BPM.", kBlue,
+			             static_cast<HFONT> (smallFont.object),
+			             static_cast<HFONT> (tinyFont.object));
+			drawSection (memoryDc, makeRect (322, 362, 616, 122), L"REVERB",
+			             L"Room, damping and BPM-synced pre-delay shape the space.", kHeat,
+			             static_cast<HFONT> (smallFont.object),
+			             static_cast<HFONT> (tinyFont.object));
+			drawSection (memoryDc, makeRect (22, 498, 916, 126), L"VISUAL SDF CONTROLS",
+			             L"Shape, fold, orbit power, scale, spin, size, hue, light, rays and bloom.",
+			             kGold, static_cast<HFONT> (smallFont.object),
+			             static_cast<HFONT> (tinyFont.object));
 
 			for (const auto& binding : bindings)
 			{
@@ -510,10 +636,10 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 				          DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
-				drawText (memoryDc, makeRect (26, 476, 700, 16),
-				          L"Drag knobs or use the mouse wheel. Echo Time and Pre-delay are musical note values locked to host BPM.",
-				          kMuted, static_cast<HFONT> (tinyFont.object),
-				          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+			drawText (memoryDc, makeRect (26, 626, 900, 14),
+			          L"Drag knobs or use the mouse wheel. Echo Time and Pre-delay are musical note values locked to host BPM.",
+			          kMuted, static_cast<HFONT> (tinyFont.object),
+			          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 			BitBlt (paintDc, 0, 0, client.right - client.left, client.bottom - client.top, memoryDc, 0,
 			        0, SRCCOPY);

@@ -24,14 +24,24 @@ enum ParamIDs : ParamID
 	kRoomSizeId,
 	kDampingId,
 	kPreDelayId,
-	kBypassId
+	kBypassId,
+	kFractalShapeId,
+	kFractalFoldId,
+	kFractalPowerId,
+	kFractalScaleId,
+	kFractalSpinId,
+	kFractalSizeId,
+	kFractalHueId,
+	kFractalLightId,
+	kFractalRaysId,
+	kFractalBloomId
 };
 
-constexpr int32 ParameterCount = 13;
+constexpr int32 ParameterCount = 23;
 constexpr int32 SyncDivisionCount = 8;
 constexpr int32 SyncDivisionStepCount = SyncDivisionCount - 1;
 constexpr int32 StateMagic = 0x59423032; // YB02
-constexpr int32 StateVersion = 1;
+constexpr int32 StateVersion = 2;
 
 static const FUID ProcessorUID (0x9F16DA45, 0xF2EC4795, 0xB6D2E897, 0xFA40207C);
 static const FUID ControllerUID (0xA727A55A, 0x8BB04252, 0x8CD0168B, 0x125CFEA1);
@@ -40,7 +50,7 @@ constexpr auto PluginName = "YuckBeat";
 constexpr auto CompanyName = "YuckTools";
 constexpr auto CompanyWeb = "https://local.yuckbeat";
 constexpr auto CompanyEmail = "trevor@localhost";
-constexpr auto Version = "0.1.0";
+constexpr auto Version = "0.2.0";
 
 constexpr ParamValue DefaultVolume = 24.0 / 36.0;
 constexpr ParamValue DefaultHighPass = 0.0;
@@ -54,6 +64,16 @@ constexpr ParamValue DefaultReverbMix = 0.0;
 constexpr ParamValue DefaultRoomSize = 0.45;
 constexpr ParamValue DefaultDamping = 0.45;
 constexpr ParamValue DefaultPreDelay = 1.0 / 7.0;
+constexpr ParamValue DefaultFractalShape = 0.38;
+constexpr ParamValue DefaultFractalFold = 0.52;
+constexpr ParamValue DefaultFractalPower = 0.57;
+constexpr ParamValue DefaultFractalScale = 0.46;
+constexpr ParamValue DefaultFractalSpin = 0.32;
+constexpr ParamValue DefaultFractalSize = 0.52;
+constexpr ParamValue DefaultFractalHue = 0.28;
+constexpr ParamValue DefaultFractalLight = 0.62;
+constexpr ParamValue DefaultFractalRays = 0.48;
+constexpr ParamValue DefaultFractalBloom = 0.55;
 
 inline double clamp01 (double value)
 {
@@ -91,6 +111,9 @@ inline double echoFeedbackFromNormalized (ParamValue value) { return clamp01 (va
 inline double reverbMixFromNormalized (ParamValue value) { return clamp01 (value); }
 inline double roomSizeFromNormalized (ParamValue value) { return 0.10 + clamp01 (value) * 0.90; }
 inline double dampingFromNormalized (ParamValue value) { return clamp01 (value) * 0.95; }
+inline double percentFromNormalized (ParamValue value) { return clamp01 (value) * 100.0; }
+inline double hueDegreesFromNormalized (ParamValue value) { return clamp01 (value) * 360.0; }
+inline double spinRateFromNormalized (ParamValue value) { return 0.05 + clamp01 (value) * 3.95; }
 
 inline int32 syncDivisionIndexFromNormalized (ParamValue value)
 {

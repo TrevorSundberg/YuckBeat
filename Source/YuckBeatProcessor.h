@@ -44,6 +44,16 @@ private:
 	ParamValue roomSize = DefaultRoomSize;
 	ParamValue damping = DefaultDamping;
 	ParamValue preDelay = DefaultPreDelay;
+	ParamValue fractalShape = DefaultFractalShape;
+	ParamValue fractalFold = DefaultFractalFold;
+	ParamValue fractalPower = DefaultFractalPower;
+	ParamValue fractalScale = DefaultFractalScale;
+	ParamValue fractalSpin = DefaultFractalSpin;
+	ParamValue fractalSize = DefaultFractalSize;
+	ParamValue fractalHue = DefaultFractalHue;
+	ParamValue fractalLight = DefaultFractalLight;
+	ParamValue fractalRays = DefaultFractalRays;
+	ParamValue fractalBloom = DefaultFractalBloom;
 	bool bypass = false;
 
 	EngineLoader engine;

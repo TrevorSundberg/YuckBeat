@@ -56,6 +56,26 @@ tresult PLUGIN_API Controller::initialize (FUnknown* context)
 	                         ParameterInfo::kCanAutomate, kDampingId);
 	parameters.addParameter (STR16 ("Pre-delay"), STR16 ("sync"), SyncDivisionStepCount,
 	                         DefaultPreDelay, ParameterInfo::kCanAutomate, kPreDelayId);
+	parameters.addParameter (STR16 ("SDF Shape"), STR16 ("%"), 0, DefaultFractalShape,
+	                         ParameterInfo::kCanAutomate, kFractalShapeId);
+	parameters.addParameter (STR16 ("SDF Fold"), STR16 ("%"), 0, DefaultFractalFold,
+	                         ParameterInfo::kCanAutomate, kFractalFoldId);
+	parameters.addParameter (STR16 ("SDF Power"), STR16 ("%"), 0, DefaultFractalPower,
+	                         ParameterInfo::kCanAutomate, kFractalPowerId);
+	parameters.addParameter (STR16 ("SDF Scale"), STR16 ("%"), 0, DefaultFractalScale,
+	                         ParameterInfo::kCanAutomate, kFractalScaleId);
+	parameters.addParameter (STR16 ("SDF Spin"), STR16 ("x"), 0, DefaultFractalSpin,
+	                         ParameterInfo::kCanAutomate, kFractalSpinId);
+	parameters.addParameter (STR16 ("SDF Size"), STR16 ("%"), 0, DefaultFractalSize,
+	                         ParameterInfo::kCanAutomate, kFractalSizeId);
+	parameters.addParameter (STR16 ("SDF Hue"), STR16 ("deg"), 0, DefaultFractalHue,
+	                         ParameterInfo::kCanAutomate, kFractalHueId);
+	parameters.addParameter (STR16 ("SDF Light"), STR16 ("%"), 0, DefaultFractalLight,
+	                         ParameterInfo::kCanAutomate, kFractalLightId);
+	parameters.addParameter (STR16 ("God Rays"), STR16 ("%"), 0, DefaultFractalRays,
+	                         ParameterInfo::kCanAutomate, kFractalRaysId);
+	parameters.addParameter (STR16 ("Bloom"), STR16 ("%"), 0, DefaultFractalBloom,
+	                         ParameterInfo::kCanAutomate, kFractalBloomId);
 	parameters.addParameter (STR16 ("Bypass"), nullptr, 1, 0,
 	                         ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, kBypassId);
 
@@ -122,6 +142,22 @@ tresult PLUGIN_API Controller::getParamStringByValue (ParamID tag, ParamValue va
 		case kPreDelayId:
 			std::snprintf (text, sizeof (text), "%s", syncLabelFromNormalized (value));
 			break;
+		case kFractalShapeId:
+		case kFractalFoldId:
+		case kFractalPowerId:
+		case kFractalScaleId:
+		case kFractalSizeId:
+		case kFractalLightId:
+		case kFractalRaysId:
+		case kFractalBloomId:
+			std::snprintf (text, sizeof (text), "%.0f%%", percentFromNormalized (value));
+			break;
+		case kFractalSpinId:
+			std::snprintf (text, sizeof (text), "%.2fx", spinRateFromNormalized (value));
+			break;
+		case kFractalHueId:
+			std::snprintf (text, sizeof (text), "%.0f deg", hueDegreesFromNormalized (value));
+			break;
 		case kBypassId:
 			std::snprintf (text, sizeof (text), "%s", value > 0.5 ? "OFFLINE" : "ACTIVE");
 			break;
@@ -143,7 +179,7 @@ tresult PLUGIN_API Controller::setComponentState (IBStream* state)
 	int32 version = 0;
 	if (!streamer.readInt32 (magic) || magic != StateMagic)
 		return kResultOk;
-	if (!streamer.readInt32 (version) || version != StateVersion)
+	if (!streamer.readInt32 (version) || version < 1 || version > StateVersion)
 		return kResultOk;
 
 	ParamValue savedVolume = DefaultVolume;
@@ -158,6 +194,16 @@ tresult PLUGIN_API Controller::setComponentState (IBStream* state)
 	ParamValue savedRoomSize = DefaultRoomSize;
 	ParamValue savedDamping = DefaultDamping;
 	ParamValue savedPreDelay = DefaultPreDelay;
+	ParamValue savedFractalShape = DefaultFractalShape;
+	ParamValue savedFractalFold = DefaultFractalFold;
+	ParamValue savedFractalPower = DefaultFractalPower;
+	ParamValue savedFractalScale = DefaultFractalScale;
+	ParamValue savedFractalSpin = DefaultFractalSpin;
+	ParamValue savedFractalSize = DefaultFractalSize;
+	ParamValue savedFractalHue = DefaultFractalHue;
+	ParamValue savedFractalLight = DefaultFractalLight;
+	ParamValue savedFractalRays = DefaultFractalRays;
+	ParamValue savedFractalBloom = DefaultFractalBloom;
 	bool savedBypass = false;
 
 	if (!streamer.readDouble (savedVolume) || !streamer.readDouble (savedHighPass) ||
@@ -167,6 +213,13 @@ tresult PLUGIN_API Controller::setComponentState (IBStream* state)
 	    !streamer.readDouble (savedReverbMix) || !streamer.readDouble (savedRoomSize) ||
 	    !streamer.readDouble (savedDamping) || !streamer.readDouble (savedPreDelay) ||
 	    !streamer.readBool (savedBypass))
+		return kResultFalse;
+	if (version >= 2 &&
+	    (!streamer.readDouble (savedFractalShape) || !streamer.readDouble (savedFractalFold) ||
+	     !streamer.readDouble (savedFractalPower) || !streamer.readDouble (savedFractalScale) ||
+	     !streamer.readDouble (savedFractalSpin) || !streamer.readDouble (savedFractalSize) ||
+	     !streamer.readDouble (savedFractalHue) || !streamer.readDouble (savedFractalLight) ||
+	     !streamer.readDouble (savedFractalRays) || !streamer.readDouble (savedFractalBloom)))
 		return kResultFalse;
 
 	setParamNormalized (kVolumeId, clamp01 (savedVolume));
@@ -181,6 +234,16 @@ tresult PLUGIN_API Controller::setComponentState (IBStream* state)
 	setParamNormalized (kRoomSizeId, clamp01 (savedRoomSize));
 	setParamNormalized (kDampingId, clamp01 (savedDamping));
 	setParamNormalized (kPreDelayId, clamp01 (savedPreDelay));
+	setParamNormalized (kFractalShapeId, clamp01 (savedFractalShape));
+	setParamNormalized (kFractalFoldId, clamp01 (savedFractalFold));
+	setParamNormalized (kFractalPowerId, clamp01 (savedFractalPower));
+	setParamNormalized (kFractalScaleId, clamp01 (savedFractalScale));
+	setParamNormalized (kFractalSpinId, clamp01 (savedFractalSpin));
+	setParamNormalized (kFractalSizeId, clamp01 (savedFractalSize));
+	setParamNormalized (kFractalHueId, clamp01 (savedFractalHue));
+	setParamNormalized (kFractalLightId, clamp01 (savedFractalLight));
+	setParamNormalized (kFractalRaysId, clamp01 (savedFractalRays));
+	setParamNormalized (kFractalBloomId, clamp01 (savedFractalBloom));
 	setParamNormalized (kBypassId, savedBypass ? 1.0 : 0.0);
 
 	return kResultOk;

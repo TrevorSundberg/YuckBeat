@@ -1,5 +1,6 @@
 #pragma once
 
+#include "YuckBeatFractalRenderer.h"
 #include "YuckBeatIDs.h"
 
 #include "public.sdk/source/vst/vsteditcontroller.h"
@@ -49,6 +50,8 @@ private:
 	ParamValue getParameter (ParamID id) const;
 	std::string parameterToString (ParamID id, ParamValue value) const;
 	int findBindingAt (int x, int y) const;
+	FractalRenderParams makeFractalRenderParams () const;
+	void drawFractalPreview (HDC dc, const RECT& rect);
 
 public:
 	static LRESULT CALLBACK windowProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -62,6 +65,8 @@ private:
 	int dragStartY {};
 	ParamValue dragStartValue {};
 	std::array<ParamValue, ParameterCount> lastValues {};
+	std::array<std::uint32_t, FractalRenderWidth * FractalRenderHeight> fractalPixels {};
+	std::uint64_t animationStartMs {};
 	bool hasLastValues {false};
 };
 
