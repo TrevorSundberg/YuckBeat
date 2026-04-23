@@ -144,11 +144,19 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 if(YUCKBEAT_COPY_VST3_AFTER_BUILD AND NOT "${YUCKBEAT_VST3_COPY_DIR}" STREQUAL "")
-    get_target_property(YUCKBEAT_PLUGIN_PACKAGE_PATH YuckBeat SMTG_PLUGIN_PACKAGE_PATH)
-    add_custom_command(TARGET YuckBeat POST_BUILD
-        COMMAND "${CMAKE_COMMAND}"
-            -DSOURCE_PATH="${YUCKBEAT_PLUGIN_PACKAGE_PATH}"
-            -DDESTINATION_PATH="${YUCKBEAT_VST3_COPY_DIR}/YuckBeat.vst3"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/copy_plugin_package.cmake"
-        COMMENT "Copying YuckBeat.vst3 to ${YUCKBEAT_VST3_COPY_DIR}")
+    if(WIN32 AND NOT SMTG_CREATE_BUNDLE_FOR_WINDOWS)
+        add_custom_command(TARGET YuckBeat POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${YUCKBEAT_VST3_COPY_DIR}"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:YuckBeat>" "${YUCKBEAT_VST3_COPY_DIR}/YuckBeat.vst3"
+            COMMENT "Copying YuckBeat.vst3 to ${YUCKBEAT_VST3_COPY_DIR}"
+            VERBATIM)
+    else()
+        get_target_property(YUCKBEAT_PLUGIN_PACKAGE_PATH YuckBeat SMTG_PLUGIN_PACKAGE_PATH)
+        add_custom_command(TARGET YuckBeat POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${YUCKBEAT_VST3_COPY_DIR}"
+            COMMAND "${CMAKE_COMMAND}" -E rm -rf "${YUCKBEAT_VST3_COPY_DIR}/YuckBeat.vst3"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${YUCKBEAT_PLUGIN_PACKAGE_PATH}" "${YUCKBEAT_VST3_COPY_DIR}/YuckBeat.vst3"
+            COMMENT "Copying YuckBeat.vst3 to ${YUCKBEAT_VST3_COPY_DIR}"
+            VERBATIM)
+    endif()
 endif()
