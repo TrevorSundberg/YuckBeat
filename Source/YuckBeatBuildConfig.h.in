@@ -1,0 +1,3 @@
+#pragma once
+
+#define YUCKBEAT_ENGINE_DLL_PATH L"@YUCKBEAT_ENGINE_DLL_PATH_C@"
