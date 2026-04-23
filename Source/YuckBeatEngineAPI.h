@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#define YUCKBEAT_ENGINE_API_VERSION 1
+#define YUCKBEAT_ENGINE_API_VERSION 2
 
 #if defined(_WIN32)
 #define YUCKBEAT_ENGINE_EXPORT extern "C" __declspec (dllexport)
@@ -12,13 +12,18 @@
 
 struct YuckBeatEngineParams
 {
-	double mix {};
-	double recall {};
-	double cycle {};
-	double curve {};
-	double smooth {};
-	double feedback {};
-	double trim {};
+	double volume {};
+	double highPass {};
+	double lowPass {};
+	double pitch {};
+	double pitchMix {};
+	double echoMix {};
+	double echoTime {};
+	double echoFeedback {};
+	double reverbMix {};
+	double roomSize {};
+	double damping {};
+	double preDelay {};
 	int bypass {};
 };
 

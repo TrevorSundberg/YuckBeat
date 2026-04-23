@@ -19,8 +19,8 @@ namespace YuckBeat {
 
 namespace {
 
-constexpr int32 kEditorWidth = 660;
-constexpr int32 kEditorHeight = 420;
+constexpr int32 kEditorWidth = 760;
+constexpr int32 kEditorHeight = 500;
 constexpr UINT_PTR kRefreshTimer = 1001;
 
 ViewRect kEditorRect (0, 0, kEditorWidth, kEditorHeight);
@@ -140,21 +140,6 @@ void drawLine (HDC dc, int x1, int y1, int x2, int y2, COLORREF color, int width
 	LineTo (dc, x2, y2);
 }
 
-double shapePhaseForDisplay (double phase, double normalizedCurve)
-{
-	const auto x = std::clamp (phase, 0.0, 1.0);
-	const auto bend = std::clamp (curveFromNormalized (normalizedCurve), -1.0, 1.0);
-
-	if (std::abs (bend) < 0.0001)
-		return x;
-
-	const auto exponent = 1.0 + std::abs (bend) * 4.0;
-	if (bend > 0.0)
-		return std::pow (x, 1.0 / exponent);
-
-	return 1.0 - std::pow (1.0 - x, 1.0 / exponent);
-}
-
 POINT polarPoint (int cx, int cy, double radius, double radians)
 {
 	return POINT {static_cast<LONG> (std::lround (cx + std::cos (radians) * radius)),
@@ -185,7 +170,10 @@ void drawKnob (HDC dc, const Editor::Binding& binding, ParamValue value)
 	const int cx = binding.x + binding.width / 2;
 	const int cy = binding.y + binding.height / 2;
 	const int radius = binding.width / 2 - 6;
-	const auto accent = binding.id == kCurveId ? kHeat : (binding.id == kTrimId ? kBlue : kAcid);
+	const auto pitchAccent = binding.id == kPitchId || binding.id == kPitchMixId;
+	const auto echoAccent = binding.id == kEchoMixId || binding.id == kEchoTimeId ||
+	                        binding.id == kEchoFeedbackId || binding.id == kPreDelayId;
+	const auto accent = pitchAccent ? kHeat : (echoAccent ? kBlue : kAcid);
 
 	GdiObject fill (CreateSolidBrush (kPanel));
 	GdiObject outline (CreatePen (PS_SOLID, 1, rgb (65, 76, 70)));
@@ -208,69 +196,19 @@ void drawKnob (HDC dc, const Editor::Binding& binding, ParamValue value)
 	Ellipse (dc, cx - 4, cy - 4, cx + 4, cy + 4);
 }
 
-void drawCurve (HDC dc, ParamValue recall, ParamValue cycle, ParamValue curve)
+void drawSection (HDC dc, const RECT& bounds, const wchar_t* title, const wchar_t* description,
+                  COLORREF accent, HFONT titleFont, HFONT smallFont)
 {
-	const auto bounds = makeRect (24, 64, 612, 170);
-	const auto graph = makeRect (42, 104, 576, 88);
 	roundRect (dc, bounds, kPanelDeep, rgb (60, 73, 67), 9, 1);
 
-	GdiObject smallFont (makeFont (11, FW_SEMIBOLD));
-	GdiObject tinyFont (makeFont (10));
-	drawText (dc, makeRect (42, 72, 180, 18), L"PAST RECALL CURVE", kMuted,
-	          static_cast<HFONT> (smallFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+	GdiObject accentBrush (CreateSolidBrush (accent));
+	RECT strip = makeRect (bounds.left, bounds.top, 5, bounds.bottom - bounds.top);
+	FillRect (dc, &strip, static_cast<HBRUSH> (accentBrush.object));
 
-	char readout[96] {};
-	std::snprintf (readout, sizeof (readout), "%.2f beat depth / %.2f beat cycle",
-	               recallBeatsFromNormalized (recall), cycleBeatsFromNormalized (cycle));
-	drawText (dc, makeRect (390, 72, 226, 18), widen (readout), kInk,
-	          static_cast<HFONT> (smallFont.object), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-
-	for (int i = 1; i < 4; ++i)
-	{
-		const int x = graph.left + (graph.right - graph.left) * i / 4;
-		drawLine (dc, x, graph.top, x, graph.bottom, kGrid);
-	}
-	for (int i = 1; i < 3; ++i)
-	{
-		const int y = graph.top + (graph.bottom - graph.top) * i / 3;
-		drawLine (dc, graph.left, y, graph.right, y, kGrid);
-	}
-
-	constexpr int kSegments = 120;
-	std::vector<POINT> line;
-	std::vector<POINT> fill;
-	line.reserve (kSegments + 1);
-	fill.reserve (kSegments + 3);
-	fill.push_back (POINT {graph.left, graph.bottom});
-
-	for (int i = 0; i <= kSegments; ++i)
-	{
-		const auto phase = static_cast<double> (i) / kSegments;
-		const auto shaped = shapePhaseForDisplay (phase, curve);
-		const auto delay = (1.0 - shaped) * recallBeatsFromNormalized (recall) / 4.0;
-		const int x = graph.left + static_cast<int> (std::lround (phase * (graph.right - graph.left)));
-		const int y = graph.bottom - static_cast<int> (
-		                               std::lround (std::clamp (delay, 0.0, 1.0) *
-		                                            (graph.bottom - graph.top)));
-		line.push_back (POINT {x, y});
-		fill.push_back (POINT {x, y});
-	}
-	fill.push_back (POINT {graph.right, graph.bottom});
-
-	GdiObject fillBrush (CreateSolidBrush (rgb (45, 87, 50)));
-	GdiObject nullPen (CreatePen (PS_NULL, 0, 0));
-	SelectGuard fillGuard (dc, fillBrush);
-	SelectGuard penGuard (dc, nullPen);
-	Polygon (dc, fill.data (), static_cast<int> (fill.size ()));
-
-	GdiObject curvePen (CreatePen (PS_SOLID, 3, kAcid));
-	SelectGuard curveGuard (dc, curvePen);
-	Polyline (dc, line.data (), static_cast<int> (line.size ()));
-
-	drawText (dc, makeRect (42, 198, 70, 16), L"NOW", kMuted, static_cast<HFONT> (tinyFont.object),
+	drawText (dc, makeRect (bounds.left + 18, bounds.top + 11, 190, 18), title, kInk, titleFont,
 	          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-	drawText (dc, makeRect (548, 198, 70, 16), L"PAST", kMuted, static_cast<HFONT> (tinyFont.object),
-	          DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+	drawText (dc, makeRect (bounds.left + 18, bounds.top + 30, bounds.right - bounds.left - 36, 18),
+	          description, kMuted, smallFont, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 }
 
 void registerWindowClass ()
@@ -307,17 +245,28 @@ Editor::~Editor ()
 
 void Editor::initializeBindings ()
 {
-	constexpr int knobY = 264;
-	constexpr int gap = 86;
+	constexpr int knobSize = 68;
+	constexpr int x0 = 42;
+	constexpr int x1 = 226;
+	constexpr int x2 = 410;
+	constexpr int x3 = 594;
+	constexpr int row1 = 130;
+	constexpr int row2 = 260;
+	constexpr int row3 = 390;
 	bindings = {
-		Binding {kMixId, 30, knobY, 68, 68, DefaultMix, "MIX", "wet amount", false},
-		Binding {kRecallId, 30 + gap, knobY, 68, 68, DefaultRecall, "RECALL", "past depth", false},
-		Binding {kCycleId, 30 + gap * 2, knobY, 68, 68, DefaultCycle, "CYCLE", "curve length", false},
-		Binding {kCurveId, 30 + gap * 3, knobY, 68, 68, DefaultCurve, "CURVE", "shape bend", false},
-		Binding {kSmoothId, 30 + gap * 4, knobY, 68, 68, DefaultSmooth, "SMOOTH", "slew time", false},
-		Binding {kFeedbackId, 30 + gap * 5, knobY, 68, 68, DefaultFeedback, "FEED", "history return", false},
-		Binding {kTrimId, 30 + gap * 6, knobY, 68, 68, DefaultTrim, "TRIM", "output gain", false},
-		Binding {kBypassId, 548, 24, 88, 26, 0.0, "BYPASS", "", true},
+		Binding {kVolumeId, x0, row1, knobSize, knobSize, DefaultVolume, "VOLUME", "output level", false},
+		Binding {kHighPassId, x1, row1, knobSize, knobSize, DefaultHighPass, "HIGH PASS", "remove lows", false},
+		Binding {kLowPassId, x2, row1, knobSize, knobSize, DefaultLowPass, "LOW PASS", "remove highs", false},
+		Binding {kPitchId, x3, row1, knobSize, knobSize, DefaultPitch, "PITCH", "semitones", false},
+		Binding {kPitchMixId, x0, row2, knobSize, knobSize, DefaultPitchMix, "PITCH MIX", "shift blend", false},
+		Binding {kEchoMixId, x1, row2, knobSize, knobSize, DefaultEchoMix, "ECHO MIX", "delay level", false},
+		Binding {kEchoTimeId, x2, row2, knobSize, knobSize, DefaultEchoTime, "ECHO TIME", "BPM note", false},
+		Binding {kEchoFeedbackId, x3, row2, knobSize, knobSize, DefaultEchoFeedback, "ECHO FB", "repeats", false},
+		Binding {kReverbMixId, x0, row3, knobSize, knobSize, DefaultReverbMix, "VERB MIX", "room level", false},
+		Binding {kRoomSizeId, x1, row3, knobSize, knobSize, DefaultRoomSize, "ROOM", "space size", false},
+		Binding {kDampingId, x2, row3, knobSize, knobSize, DefaultDamping, "DAMPING", "darkness", false},
+		Binding {kPreDelayId, x3, row3, knobSize, knobSize, DefaultPreDelay, "PRE-DELAY", "BPM note", false},
+		Binding {kBypassId, 646, 24, 88, 26, 0.0, "BYPASS", "", true},
 	};
 }
 
@@ -507,14 +456,24 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 			GdiObject titleFont (makeFont (29, FW_BOLD));
 			GdiObject smallFont (makeFont (11, FW_SEMIBOLD));
 			GdiObject tinyFont (makeFont (10));
-			drawText (memoryDc, makeRect (24, 18, 220, 34), L"YUCKBEAT", kInk,
-			          static_cast<HFONT> (titleFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-			drawText (memoryDc, makeRect (255, 25, 360, 20),
-			          L"tempo-synced history recall and curve scrubbing", kMuted,
-			          static_cast<HFONT> (smallFont.object), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+				drawText (memoryDc, makeRect (24, 18, 220, 34), L"YUCKBEAT", kInk,
+				          static_cast<HFONT> (titleFont.object), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+				drawText (memoryDc, makeRect (240, 25, 390, 20),
+				          L"basic BPM-aware multi-effect template", kMuted,
+				          static_cast<HFONT> (smallFont.object), DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
 
-			drawCurve (memoryDc, getParameter (kRecallId), getParameter (kCycleId),
-			           getParameter (kCurveId));
+				drawSection (memoryDc, makeRect (22, 86, 716, 118), L"FILTER / GAIN",
+				             L"Set level, clean up lows and highs, then tune pitch in semitones.", kAcid,
+				             static_cast<HFONT> (smallFont.object),
+				             static_cast<HFONT> (tinyFont.object));
+				drawSection (memoryDc, makeRect (22, 216, 716, 118), L"PITCH / ECHO",
+				             L"Pitch mix blends the shifter. Echo time follows the host BPM.", kBlue,
+				             static_cast<HFONT> (smallFont.object),
+				             static_cast<HFONT> (tinyFont.object));
+				drawSection (memoryDc, makeRect (22, 346, 716, 118), L"REVERB",
+				             L"Room, damping and BPM-synced pre-delay shape the space.", kHeat,
+				             static_cast<HFONT> (smallFont.object),
+				             static_cast<HFONT> (tinyFont.object));
 
 			for (const auto& binding : bindings)
 			{
@@ -551,10 +510,10 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 				          DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 			}
 
-			drawText (memoryDc, makeRect (26, 392, 608, 16),
-			          L"Drag knobs or mouse-wheel them. Curve controls how far back the read head reaches over each cycle.",
-			          kMuted, static_cast<HFONT> (tinyFont.object),
-			          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+				drawText (memoryDc, makeRect (26, 476, 700, 16),
+				          L"Drag knobs or use the mouse wheel. Echo Time and Pre-delay are musical note values locked to host BPM.",
+				          kMuted, static_cast<HFONT> (tinyFont.object),
+				          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 			BitBlt (paintDc, 0, 0, client.right - client.left, client.bottom - client.top, memoryDc, 0,
 			        0, SRCCOPY);

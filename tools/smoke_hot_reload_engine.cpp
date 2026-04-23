@@ -25,13 +25,18 @@ int main ()
 	float* outputs[] = {outputLeft.data (), outputRight.data ()};
 
 	YuckBeatEngineParams params {};
-	params.mix = 0.75;
-	params.recall = 0.25;
-	params.cycle = 0.5;
-	params.curve = 0.5;
-	params.smooth = 0.1;
-	params.feedback = 0.0;
-	params.trim = 0.5;
+	params.volume = 0.70;
+	params.highPass = 0.05;
+	params.lowPass = 0.95;
+	params.pitch = 0.58;
+	params.pitchMix = 0.35;
+	params.echoMix = 0.20;
+	params.echoTime = 4.0 / 7.0;
+	params.echoFeedback = 0.25;
+	params.reverbMix = 0.20;
+	params.roomSize = 0.45;
+	params.damping = 0.40;
+	params.preDelay = 1.0 / 7.0;
 	params.bypass = 0;
 
 	YuckBeatEngineProcessBlock block {};

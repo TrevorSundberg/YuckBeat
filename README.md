@@ -1,19 +1,24 @@
 # YuckBeat
 
-YuckBeat is a VST3 effect that records incoming audio into a rolling history buffer, then reads back earlier material along a tempo-synced curve for Gross Beat-style time recall.
+YuckBeat is a VST3 effect template with a practical starter chain: gain, high-pass and low-pass filters, pitch shifting, BPM-synced echo, and room reverb with BPM-synced pre-delay.
 
 The plugin has a stable VST3 shell and a separate hot-reloadable DSP engine binary. Windows builds include a native Win32/GDI editor for FL Studio; Linux and macOS builds currently compile the same processor and hot-reload engine while falling back to the host's generic parameter editor.
 
 ## Controls
 
 - `Bypass`: pass audio through unchanged.
-- `Recall`: how far back in the rolling buffer to read.
-- `Cycle`: tempo-synced curve length.
-- `Curve`: shape of the time recall ramp.
-- `Smooth`: crossfade smoothing for reduced clicks.
-- `Feedback`: amount of recalled audio written back into history.
-- `Trim`: output gain.
-- `Mix`: final wet/dry mix.
+- `Volume`: output gain from `-24 dB` to `+12 dB`.
+- `High Pass`: removes low frequencies, with `Off` at minimum.
+- `Low Pass`: removes high frequencies, with `Off` at maximum.
+- `Pitch`: pitch shift in semitones from `-12` to `+12`.
+- `Pitch Mix`: dry/shifted blend for the pitch shifter.
+- `Echo Mix`: dry/echo blend.
+- `Echo Time`: BPM-synced note value from `1/64` to `2 bars`.
+- `Echo Feedback`: repeat amount.
+- `Reverb Mix`: dry/reverb blend.
+- `Room Size`: reverb space size.
+- `Damping`: reverb brightness/darkness.
+- `Pre-delay`: BPM-synced reverb pre-delay note value.
 
 ## Windows From Linux
 

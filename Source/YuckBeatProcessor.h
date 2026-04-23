@@ -32,13 +32,18 @@ private:
 	void applyParameterChanges (IParameterChanges& changes);
 	void copyInputToOutput (ProcessData& data);
 
-	ParamValue mix = DefaultMix;
-	ParamValue recall = DefaultRecall;
-	ParamValue cycle = DefaultCycle;
-	ParamValue curve = DefaultCurve;
-	ParamValue smooth = DefaultSmooth;
-	ParamValue feedback = DefaultFeedback;
-	ParamValue trim = DefaultTrim;
+	ParamValue volume = DefaultVolume;
+	ParamValue highPass = DefaultHighPass;
+	ParamValue lowPass = DefaultLowPass;
+	ParamValue pitch = DefaultPitch;
+	ParamValue pitchMix = DefaultPitchMix;
+	ParamValue echoMix = DefaultEchoMix;
+	ParamValue echoTime = DefaultEchoTime;
+	ParamValue echoFeedback = DefaultEchoFeedback;
+	ParamValue reverbMix = DefaultReverbMix;
+	ParamValue roomSize = DefaultRoomSize;
+	ParamValue damping = DefaultDamping;
+	ParamValue preDelay = DefaultPreDelay;
 	bool bypass = false;
 
 	EngineLoader engine;

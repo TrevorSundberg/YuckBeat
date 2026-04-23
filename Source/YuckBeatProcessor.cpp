@@ -93,13 +93,18 @@ void Processor::applyParameterChanges (IParameterChanges& changes)
 
 			switch (queue->getParameterId ())
 			{
-				case kMixId: mix = value; break;
-				case kRecallId: recall = value; break;
-				case kCycleId: cycle = value; break;
-				case kCurveId: curve = value; break;
-				case kSmoothId: smooth = value; break;
-				case kFeedbackId: feedback = value; break;
-				case kTrimId: trim = value; break;
+				case kVolumeId: volume = value; break;
+				case kHighPassId: highPass = value; break;
+				case kLowPassId: lowPass = value; break;
+				case kPitchId: pitch = value; break;
+				case kPitchMixId: pitchMix = value; break;
+				case kEchoMixId: echoMix = value; break;
+				case kEchoTimeId: echoTime = value; break;
+				case kEchoFeedbackId: echoFeedback = value; break;
+				case kReverbMixId: reverbMix = value; break;
+				case kRoomSizeId: roomSize = value; break;
+				case kDampingId: damping = value; break;
+				case kPreDelayId: preDelay = value; break;
 				case kBypassId: bypass = value > 0.5; break;
 			}
 		}
@@ -129,13 +134,18 @@ tresult PLUGIN_API Processor::process (ProcessData& data)
 	}
 
 	YuckBeatEngineParams params {};
-	params.mix = mix;
-	params.recall = recall;
-	params.cycle = cycle;
-	params.curve = curve;
-	params.smooth = smooth;
-	params.feedback = feedback;
-	params.trim = trim;
+	params.volume = volume;
+	params.highPass = highPass;
+	params.lowPass = lowPass;
+	params.pitch = pitch;
+	params.pitchMix = pitchMix;
+	params.echoMix = echoMix;
+	params.echoTime = echoTime;
+	params.echoFeedback = echoFeedback;
+	params.reverbMix = reverbMix;
+	params.roomSize = roomSize;
+	params.damping = damping;
+	params.preDelay = preDelay;
 	params.bypass = bypass ? 1 : 0;
 
 	YuckBeatEngineProcessBlock block {};
@@ -180,13 +190,36 @@ tresult PLUGIN_API Processor::setState (IBStream* state)
 		return kResultFalse;
 
 	IBStreamer streamer (state, kLittleEndian);
+	int32 magic = 0;
+	int32 version = 0;
+	if (!streamer.readInt32 (magic) || magic != StateMagic)
+		return kResultOk;
+	if (!streamer.readInt32 (version) || version != StateVersion)
+		return kResultOk;
+
 	bool savedBypass = false;
 
-	if (!streamer.readDouble (mix) || !streamer.readDouble (recall) || !streamer.readDouble (cycle) ||
-	    !streamer.readDouble (curve) || !streamer.readDouble (smooth) || !streamer.readDouble (feedback) ||
-	    !streamer.readDouble (trim) || !streamer.readBool (savedBypass))
+	if (!streamer.readDouble (volume) || !streamer.readDouble (highPass) ||
+	    !streamer.readDouble (lowPass) || !streamer.readDouble (pitch) ||
+	    !streamer.readDouble (pitchMix) || !streamer.readDouble (echoMix) ||
+	    !streamer.readDouble (echoTime) || !streamer.readDouble (echoFeedback) ||
+	    !streamer.readDouble (reverbMix) || !streamer.readDouble (roomSize) ||
+	    !streamer.readDouble (damping) || !streamer.readDouble (preDelay) ||
+	    !streamer.readBool (savedBypass))
 		return kResultFalse;
 
+	volume = clamp01 (volume);
+	highPass = clamp01 (highPass);
+	lowPass = clamp01 (lowPass);
+	pitch = clamp01 (pitch);
+	pitchMix = clamp01 (pitchMix);
+	echoMix = clamp01 (echoMix);
+	echoTime = clamp01 (echoTime);
+	echoFeedback = clamp01 (echoFeedback);
+	reverbMix = clamp01 (reverbMix);
+	roomSize = clamp01 (roomSize);
+	damping = clamp01 (damping);
+	preDelay = clamp01 (preDelay);
 	bypass = savedBypass;
 	return kResultOk;
 }
@@ -197,13 +230,20 @@ tresult PLUGIN_API Processor::getState (IBStream* state)
 		return kResultFalse;
 
 	IBStreamer streamer (state, kLittleEndian);
-	streamer.writeDouble (mix);
-	streamer.writeDouble (recall);
-	streamer.writeDouble (cycle);
-	streamer.writeDouble (curve);
-	streamer.writeDouble (smooth);
-	streamer.writeDouble (feedback);
-	streamer.writeDouble (trim);
+	streamer.writeInt32 (StateMagic);
+	streamer.writeInt32 (StateVersion);
+	streamer.writeDouble (volume);
+	streamer.writeDouble (highPass);
+	streamer.writeDouble (lowPass);
+	streamer.writeDouble (pitch);
+	streamer.writeDouble (pitchMix);
+	streamer.writeDouble (echoMix);
+	streamer.writeDouble (echoTime);
+	streamer.writeDouble (echoFeedback);
+	streamer.writeDouble (reverbMix);
+	streamer.writeDouble (roomSize);
+	streamer.writeDouble (damping);
+	streamer.writeDouble (preDelay);
 	streamer.writeBool (bypass);
 
 	return kResultOk;

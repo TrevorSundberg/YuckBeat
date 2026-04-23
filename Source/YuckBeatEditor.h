@@ -61,7 +61,7 @@ private:
 	int activeBinding {-1};
 	int dragStartY {};
 	ParamValue dragStartValue {};
-	std::array<ParamValue, 8> lastValues {};
+	std::array<ParamValue, ParameterCount> lastValues {};
 	bool hasLastValues {false};
 };
 
