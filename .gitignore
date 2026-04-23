@@ -1,0 +1,27 @@
+build*/
+
+# CMake/Ninja generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+build.ninja
+.ninja_deps
+.ninja_log
+generated/
+
+# Windows and VST build products
+*.dll
+*.exe
+*.lib
+*.a
+*.pdb
+*.ilk
+*.exp
+*.vst3
+
+# Local editor and OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
