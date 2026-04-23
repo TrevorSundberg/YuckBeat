@@ -1,0 +1,14 @@
+.git
+build*/
+
+*.dll
+*.exe
+*.so
+*.dylib
+*.vst3
+*.pdb
+*.ilk
+*.a
+
+.DS_Store
+Thumbs.db
