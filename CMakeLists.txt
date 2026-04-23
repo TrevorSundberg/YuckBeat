@@ -95,6 +95,20 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_link_options(smoke_load_vst3 PRIVATE -static -municode)
 endif()
 
+add_executable(smoke_hot_reload_engine
+    tools/smoke_hot_reload_engine.cpp
+    Source/YuckBeatEngineAPI.h
+    Source/YuckBeatEngineLoader.cpp
+    Source/YuckBeatEngineLoader.h)
+add_dependencies(smoke_hot_reload_engine YuckBeatEngine)
+target_compile_features(smoke_hot_reload_engine PRIVATE cxx_std_17)
+target_include_directories(smoke_hot_reload_engine PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated")
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_link_options(smoke_hot_reload_engine PRIVATE -static)
+endif()
+
 add_custom_command(TARGET YuckBeat POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${YUCKBEAT_VST3_COPY_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:YuckBeat>" "${YUCKBEAT_VST3_COPY_DIR}/YuckBeat.vst3"

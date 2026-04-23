@@ -52,4 +52,7 @@ Hot reload covers DSP implementation changes only. Changes to the VST3 shell, ed
 ```sh
 cmake --build /home/trevor/YuckBeat/build-win --config Release --target smoke_load_vst3
 wine /home/trevor/YuckBeat/build-win/bin/smoke_load_vst3.exe 'C:\Program Files\Common Files\VST3\YuckBeat.vst3'
+
+cmake --build /home/trevor/YuckBeat/build-win --config Release --target smoke_hot_reload_engine
+wine /home/trevor/YuckBeat/build-win/bin/smoke_hot_reload_engine.exe
 ```
