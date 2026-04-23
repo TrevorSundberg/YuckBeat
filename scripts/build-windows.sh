@@ -24,4 +24,4 @@ if [[ -n "${YUCKBEAT_VST3_COPY_DIR:-}" ]]; then
 fi
 
 cmake "${cmake_args[@]}"
-cmake --build "${build_dir}" --config "${build_type}" --target YuckBeat smoke_load_vst3 smoke_hot_reload_engine -j "${YUCKBEAT_BUILD_JOBS:-4}"
+cmake --build "${build_dir}" --config "${build_type}" --target YuckBeat smoke_load_vst3 smoke_hot_reload_engine smoke_hot_reload_visual -j "${YUCKBEAT_BUILD_JOBS:-4}"

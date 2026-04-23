@@ -2,7 +2,7 @@
 
 YuckBeat is a VST3 effect template with a practical starter chain: gain, high-pass and low-pass filters, pitch shifting, BPM-synced echo, and room reverb with BPM-synced pre-delay.
 
-The plugin has a stable VST3 shell and a separate hot-reloadable DSP engine binary. Windows builds include a native Win32/GDI editor for FL Studio; Linux and macOS builds currently compile the same processor and hot-reload engine while falling back to the host's generic parameter editor.
+The plugin has a stable VST3 shell plus separate hot-reloadable DSP and visual binaries. Windows builds include a native Win32/GDI editor for FL Studio; Linux and macOS builds currently compile the same processor and hot-reload modules while falling back to the host's generic parameter editor.
 
 ## Controls
 
@@ -19,6 +19,7 @@ The plugin has a stable VST3 shell and a separate hot-reloadable DSP engine bina
 - `Room Size`: reverb space size.
 - `Damping`: reverb brightness/darkness.
 - `Pre-delay`: BPM-synced reverb pre-delay note value.
+- `SDF Shape`, `SDF Fold`, `SDF Power`, `SDF Scale`, `SDF Spin`, `SDF Size`, `SDF Hue`, `SDF Light`, `God Rays`, `Bloom`: visual controls for the hot-reloadable fractal preview.
 
 ## Windows From Linux
 
@@ -36,7 +37,7 @@ The copied VST3 shell should appear at:
 /home/trevor/.wine/drive_c/Program Files/Common Files/VST3/YuckBeat.vst3
 ```
 
-In FL Studio, use `Options > Manage plugins > Find installed plugins` if it does not appear immediately. After shell, UI, parameter, or factory changes, rebuild the `YuckBeat` target and restart FL Studio or reload the plugin.
+In FL Studio, use `Options > Manage plugins > Find installed plugins` if it does not appear immediately. After shell, editor layout, parameter, or factory changes, rebuild the `YuckBeat` target and restart FL Studio or reload the plugin. DSP and SDF renderer implementation changes can hot-reload from the build output without reinstalling the shell.
 
 ## Linux
 
@@ -80,7 +81,7 @@ docker run --rm \
   yuckbeat-build ./scripts/build-windows.sh
 ```
 
-Docker can build Linux and Windows targets. Mounting the repo at the same path inside the container keeps the generated hot-reload engine path valid for Wine on the host. macOS VST3 builds need a macOS host or runner because Apple's SDK/toolchain and bundle signing are macOS-specific.
+Docker can build Linux and Windows targets. Mounting the repo at the same path inside the container keeps the generated hot-reload engine and visual paths valid for Wine on the host. macOS VST3 builds need a macOS host or runner because Apple's SDK/toolchain and bundle signing are macOS-specific.
 
 ## Hot Reload
 
@@ -92,7 +93,15 @@ cmake --build /home/trevor/YuckBeat/build-win --config Release --target YuckBeat
 
 The loaded VST shell checks the engine binary timestamp during processing. When the build output changes, it copies the engine to a temporary shadow file, loads that copy, swaps the DSP instance, and deletes the previous shadow copy. This keeps the host from locking the real build output, so iterative DSP rebuilds can be picked up without reinstalling the VST3 shell.
 
-Hot reload covers DSP implementation changes only. Changes to the VST3 shell, editor, parameters, component IDs, or build path still require rebuilding `YuckBeat` and reloading the plugin in the host.
+For SDF renderer changes inside `YuckBeatFractalRenderer.cpp` or `YuckBeatVisual.cpp`, rebuild only the visual module:
+
+```sh
+cmake --build /home/trevor/YuckBeat/build-win --config Release --target YuckBeatVisual
+```
+
+The editor checks the visual binary timestamp while repainting, copies it to a temporary shadow file, and loads the newest renderer without touching the installed VST3 shell.
+
+Hot reload covers DSP and visual implementation changes. Changes to the VST3 shell, editor layout code, parameter list, component IDs, factory metadata, or configured build paths still require rebuilding `YuckBeat` and reloading the plugin in FL Studio because the host owns and caches the loaded shell DLL.
 
 ## Smoke Test
 
@@ -104,6 +113,9 @@ wine /home/trevor/YuckBeat/build-win/bin/smoke_load_vst3.exe 'C:\Program Files\C
 
 cmake --build /home/trevor/YuckBeat/build-win --config Release --target smoke_hot_reload_engine
 wine /home/trevor/YuckBeat/build-win/bin/smoke_hot_reload_engine.exe
+
+cmake --build /home/trevor/YuckBeat/build-win --config Release --target smoke_hot_reload_visual
+wine /home/trevor/YuckBeat/build-win/bin/smoke_hot_reload_visual.exe
 ```
 
 Linux:
@@ -113,4 +125,6 @@ Linux:
   /home/trevor/YuckBeat/build-linux/VST3/Release/YuckBeat.vst3/Contents/x86_64-linux/YuckBeat.so
 
 /home/trevor/YuckBeat/build-linux/bin/Release/smoke_hot_reload_engine
+
+/home/trevor/YuckBeat/build-linux/bin/Release/smoke_hot_reload_visual
 ```

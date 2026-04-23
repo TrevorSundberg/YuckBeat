@@ -1,7 +1,7 @@
 #pragma once
 
-#include "YuckBeatFractalRenderer.h"
 #include "YuckBeatIDs.h"
+#include "YuckBeatVisualLoader.h"
 
 #include "public.sdk/source/vst/vsteditcontroller.h"
 
@@ -66,7 +66,10 @@ private:
 	ParamValue dragStartValue {};
 	std::array<ParamValue, ParameterCount> lastValues {};
 	std::array<std::uint32_t, FractalRenderWidth * FractalRenderHeight> fractalPixels {};
+	VisualLoader visual;
 	std::uint64_t animationStartMs {};
+	std::uint64_t lastVisualRenderMs {};
+	bool hasVisualFrame {false};
 	bool hasLastValues {false};
 };
 

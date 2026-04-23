@@ -50,7 +50,7 @@ constexpr auto PluginName = "YuckBeat";
 constexpr auto CompanyName = "YuckTools";
 constexpr auto CompanyWeb = "https://local.yuckbeat";
 constexpr auto CompanyEmail = "trevor@localhost";
-constexpr auto Version = "0.2.0";
+constexpr auto Version = "0.2.1";
 
 constexpr ParamValue DefaultVolume = 24.0 / 36.0;
 constexpr ParamValue DefaultHighPass = 0.0;

@@ -105,7 +105,7 @@ float fractalPattern (Vec3 point, const FractalRenderParams& params) noexcept
 	float signal = 0.0f;
 	float amplitude = 0.5f;
 
-	for (int i = 0; i < 7; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		q = absVec (q) - Vec3 {fold, fold * (0.82f + shape * 0.42f),
 		                       fold * (1.16f - shape * 0.32f)};
@@ -159,7 +159,7 @@ float ambientOcclusion (Vec3 point, Vec3 normal, const FractalRenderParams& para
 {
 	float occlusion = 0.0f;
 	float scale = 1.0f;
-	for (int i = 1; i <= 5; ++i)
+	for (int i = 1; i <= 3; ++i)
 	{
 		const auto distance = 0.035f * static_cast<float> (i);
 		const auto sample = distanceField (point + normal * distance, params);
@@ -278,14 +278,14 @@ void renderFractal (const FractalRenderParams& params, std::uint32_t* pixels) no
 			bool hit = false;
 			Vec3 hitPoint {};
 
-			for (int step = 0; step < 54; ++step)
+			for (int step = 0; step < 28; ++step)
 			{
 				const auto point = rayOrigin + rayDirection * travel;
 				const auto distance = distanceField (point, params);
-				glow += std::exp (-std::fabs (distance) * 18.0f) * 0.0065f *
+				glow += std::exp (-std::fabs (distance) * 15.0f) * 0.0050f *
 				        (0.45f + saturate (params.bloom));
 
-				if (distance < 0.0027f)
+				if (distance < 0.0042f)
 				{
 					hit = true;
 					hitPoint = point;

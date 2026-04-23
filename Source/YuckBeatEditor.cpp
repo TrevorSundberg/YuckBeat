@@ -321,7 +321,7 @@ tresult PLUGIN_API Editor::attached (void* parent, FIDString type)
 	}
 
 	animationStartMs = GetTickCount64 ();
-	SetTimer (window, kRefreshTimer, 50, nullptr);
+	SetTimer (window, kRefreshTimer, 100, nullptr);
 	return kResultTrue;
 }
 
@@ -492,7 +492,13 @@ FractalRenderParams Editor::makeFractalRenderParams () const
 
 void Editor::drawFractalPreview (HDC dc, const RECT& rect)
 {
-	renderFractal (makeFractalRenderParams (), fractalPixels.data ());
+	const auto nowMs = GetTickCount64 ();
+	if (!hasVisualFrame || nowMs - lastVisualRenderMs >= 100)
+	{
+		visual.render (makeFractalRenderParams (), fractalPixels.data ());
+		lastVisualRenderMs = nowMs;
+		hasVisualFrame = true;
+	}
 
 	BITMAPINFO bitmapInfo {};
 	bitmapInfo.bmiHeader.biSize = sizeof (bitmapInfo.bmiHeader);
@@ -502,6 +508,7 @@ void Editor::drawFractalPreview (HDC dc, const RECT& rect)
 	bitmapInfo.bmiHeader.biBitCount = 32;
 	bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
+	SetStretchBltMode (dc, COLORONCOLOR);
 	StretchDIBits (dc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0, 0,
 	               FractalRenderWidth, FractalRenderHeight, fractalPixels.data (), &bitmapInfo,
 	               DIB_RGB_COLORS, SRCCOPY);
@@ -576,7 +583,8 @@ LRESULT Editor::handleMessage (HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 			             L"Audio controls push color, light, motion and surface detail.", kGold,
 			             static_cast<HFONT> (smallFont.object),
 			             static_cast<HFONT> (tinyFont.object));
-			drawFractalPreview (memoryDc, makeRect (34, 124, FractalRenderWidth, FractalRenderHeight));
+			drawFractalPreview (memoryDc,
+			                    makeRect (34, 124, FractalDisplayWidth, FractalDisplayHeight));
 			drawText (memoryDc, makeRect (34, 392, 252, 22), L"PBR-ish light, AO, bloom and rays",
 			          kInk, static_cast<HFONT> (smallFont.object),
 			          DT_CENTER | DT_VCENTER | DT_SINGLELINE);

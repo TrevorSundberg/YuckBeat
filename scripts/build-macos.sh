@@ -12,4 +12,4 @@ cmake -S "${repo_root}" -B "${build_dir}" -G Ninja \
   -DVST3_SDK_ROOT="${vst3_sdk_root}" \
   -DYUCKBEAT_COPY_VST3_AFTER_BUILD="${copy_after_build}"
 
-cmake --build "${build_dir}" --config "${build_type}" --target YuckBeat smoke_load_vst3 smoke_hot_reload_engine -j "${YUCKBEAT_BUILD_JOBS:-4}"
+cmake --build "${build_dir}" --config "${build_type}" --target YuckBeat smoke_load_vst3 smoke_hot_reload_engine smoke_hot_reload_visual -j "${YUCKBEAT_BUILD_JOBS:-4}"

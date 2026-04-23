@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(YuckBeat VERSION 0.2.0 LANGUAGES C CXX)
+project(YuckBeat VERSION 0.2.1 LANGUAGES C CXX)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_CXX_STANDARD 17)
@@ -50,13 +50,18 @@ add_subdirectory("${VST3_SDK_ROOT}/base" vst3sdk/base)
 add_subdirectory("${VST3_SDK_ROOT}/public.sdk" vst3sdk/public.sdk)
 
 set(_engine_source_path "${CMAKE_BINARY_DIR}/YuckBeatEngine${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(_visual_source_path "${CMAKE_BINARY_DIR}/YuckBeatVisual${CMAKE_SHARED_LIBRARY_SUFFIX}")
 if(WIN32 AND CMAKE_HOST_UNIX)
     string(REPLACE "/" "\\\\" _engine_source_path_native "${_engine_source_path}")
+    string(REPLACE "/" "\\\\" _visual_source_path_native "${_visual_source_path}")
     set(YUCKBEAT_ENGINE_BINARY_PATH "Z:${_engine_source_path_native}")
+    set(YUCKBEAT_VISUAL_BINARY_PATH "Z:${_visual_source_path_native}")
 else()
     file(TO_NATIVE_PATH "${_engine_source_path}" YUCKBEAT_ENGINE_BINARY_PATH)
+    file(TO_NATIVE_PATH "${_visual_source_path}" YUCKBEAT_VISUAL_BINARY_PATH)
 endif()
 set(YUCKBEAT_ENGINE_BINARY_EXTENSION "${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(YUCKBEAT_VISUAL_BINARY_EXTENSION "${CMAKE_SHARED_LIBRARY_SUFFIX}")
 configure_file(
     Source/YuckBeatBuildConfig.h.in
     "${CMAKE_CURRENT_BINARY_DIR}/generated/YuckBeatBuildConfig.h"
@@ -80,6 +85,26 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_link_options(YuckBeatEngine PRIVATE -static)
 endif()
 
+add_library(YuckBeatVisual SHARED
+    Source/YuckBeatFractalRenderer.cpp
+    Source/YuckBeatFractalRenderer.h
+    Source/YuckBeatVisual.cpp
+    Source/YuckBeatVisualAPI.h)
+
+set_target_properties(YuckBeatVisual PROPERTIES
+    PREFIX ""
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+
+target_compile_features(YuckBeatVisual PRIVATE cxx_std_17)
+target_include_directories(YuckBeatVisual PRIVATE
+    "${VST3_SDK_ROOT}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_link_options(YuckBeatVisual PRIVATE -static)
+endif()
+
 set(YUCKBEAT_PLUGIN_SOURCES
     Source/YuckBeatController.cpp
     Source/YuckBeatController.h
@@ -87,11 +112,13 @@ set(YUCKBEAT_PLUGIN_SOURCES
     Source/YuckBeatEngineLoader.cpp
     Source/YuckBeatEngineLoader.h
     Source/YuckBeatFactory.cpp
-    Source/YuckBeatFractalRenderer.cpp
     Source/YuckBeatFractalRenderer.h
     Source/YuckBeatIDs.h
     Source/YuckBeatProcessor.cpp
-    Source/YuckBeatProcessor.h)
+    Source/YuckBeatProcessor.h
+    Source/YuckBeatVisualAPI.h
+    Source/YuckBeatVisualLoader.cpp
+    Source/YuckBeatVisualLoader.h)
 
 if(WIN32)
     list(APPEND YUCKBEAT_PLUGIN_SOURCES
@@ -104,7 +131,7 @@ smtg_add_vst3plugin(YuckBeat
     SOURCES_LIST
         ${YUCKBEAT_PLUGIN_SOURCES})
 
-add_dependencies(YuckBeat YuckBeatEngine)
+add_dependencies(YuckBeat YuckBeatEngine YuckBeatVisual)
 target_compile_features(YuckBeat PUBLIC cxx_std_17)
 target_include_directories(YuckBeat PRIVATE
     "${VST3_SDK_ROOT}"
@@ -143,6 +170,21 @@ target_include_directories(smoke_hot_reload_engine PRIVATE
 target_link_libraries(smoke_hot_reload_engine PRIVATE ${CMAKE_DL_LIBS})
 if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_link_options(smoke_hot_reload_engine PRIVATE -static)
+endif()
+
+add_executable(smoke_hot_reload_visual
+    tools/smoke_hot_reload_visual.cpp
+    Source/YuckBeatVisualAPI.h
+    Source/YuckBeatVisualLoader.cpp
+    Source/YuckBeatVisualLoader.h)
+add_dependencies(smoke_hot_reload_visual YuckBeatVisual)
+target_compile_features(smoke_hot_reload_visual PRIVATE cxx_std_17)
+target_include_directories(smoke_hot_reload_visual PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated")
+target_link_libraries(smoke_hot_reload_visual PRIVATE ${CMAKE_DL_LIBS})
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_link_options(smoke_hot_reload_visual PRIVATE -static)
 endif()
 
 if(YUCKBEAT_COPY_VST3_AFTER_BUILD AND NOT "${YUCKBEAT_VST3_COPY_DIR}" STREQUAL "")
