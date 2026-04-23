@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(YuckBeat VERSION 0.1.0 LANGUAGES C CXX)
+project(YuckBeat VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(CMAKE_CXX_STANDARD 17)
@@ -87,6 +87,8 @@ set(YUCKBEAT_PLUGIN_SOURCES
     Source/YuckBeatEngineLoader.cpp
     Source/YuckBeatEngineLoader.h
     Source/YuckBeatFactory.cpp
+    Source/YuckBeatFractalRenderer.cpp
+    Source/YuckBeatFractalRenderer.h
     Source/YuckBeatIDs.h
     Source/YuckBeatProcessor.cpp
     Source/YuckBeatProcessor.h)
